@@ -1,69 +1,64 @@
 import json
+import os
 
-# Cargar los componentes desde un archivo JSON
-def cargar_componentes(archivo="componentes.json"):
-    try:
-        with open(archivo, "r") as f:
-            componentes = json.load(f)
-    except FileNotFoundError:
-        componentes = {}
-    return componentes
+# Archivo JSON donde se guardará la base de datos
+archivo_bd = 'componentes.json'
 
-# Guardar los componentes en un archivo JSON
-def guardar_componentes(componentes, archivo="componentes.json"):
-    with open(archivo, "w") as f:
-        json.dump(componentes, f, indent=4)
+# Cargar base de datos de componentes electrónicos
+def cargar_componentes():
+    if os.path.exists(archivo_bd):
+        with open(archivo_bd, 'r') as archivo:
+            return json.load(archivo)
+    else:
+        # Si el archivo no existe, se crea una base de datos inicial
+        return [
+            {'nombre': 'Resistencia', 'pines': 2, 'tipo': 'pasivo', 'color': 'varios', 'funcion': 'reducir corriente'},
+            {'nombre': 'Transistor', 'pines': 3, 'tipo': 'activo', 'color': 'negro', 'funcion': 'amplificar'},
+            {'nombre': 'Condensador', 'pines': 2, 'tipo': 'pasivo', 'color': 'varios', 'funcion': 'almacenar carga'},
+            {'nombre': 'Diodo', 'pines': 2, 'tipo': 'activo', 'color': 'negro', 'funcion': 'permitir paso en un sentido'}
+        ]
 
-# Definir o cargar los componentes existentes
-componentes = cargar_componentes()
+# Guardar la base de datos de componentes electrónicos
+def guardar_componentes(componentes):
+    with open(archivo_bd, 'w') as archivo:
+        json.dump(componentes, archivo, indent=4)
 
-if not componentes:  # Si no hay componentes, inicializar algunos
-    componentes = {
-        "Resistor": {"Es pasivo": True, "Tiene polaridad": False, "Regula corriente": True, "Almacena energía": False},
-        "Capacitor": {"Es pasivo": True, "Tiene polaridad": False, "Regula corriente": False, "Almacena energía": True},
-        "Diodo": {"Es activo": True, "Tiene polaridad": True, "Regula corriente": True, "Almacena energía": False},
-        "Transistor": {"Es activo": True, "Tiene polaridad": True, "Regula corriente": True, "Almacena energía": False},
-    }
-    guardar_componentes(componentes)  # Guardar componentes por primera vez
+# Función para hacer preguntas y filtrar componentes
+def hacer_pregunta(componentes, caracteristica, valor):
+    return [comp for comp in componentes if comp[caracteristica] == valor]
 
-# Función para hacer preguntas al usuario
-def adivina_componente():
-    posibles = componentes.copy()  # Copia de todos los componentes posibles
-    while len(posibles) > 1:
-        # Elegir una característica sobre la cual preguntar
-        caracteristica = list(posibles.values())[0].keys()  # Usar la primera característica
-        for c in caracteristica:
-            respuesta = input(f"¿{c}? (sí/no): ").strip().lower()
-            if respuesta == 'sí':
-                posibles = {k: v for k, v in posibles.items() if c in v and v[c] is True}
-            else:
-                posibles = {k: v for k, v in posibles.items() if c in v and v[c] is False}
+# Función principal para adivinar el componente
+def adivinar_componente(componentes):
+    candidatos = componentes
+    preguntas = ['pines', 'tipo', 'color', 'funcion']
+    
+    for pregunta in preguntas:
+        opciones = list(set(comp[pregunta] for comp in candidatos))
+        if len(opciones) == 1:
+            continue
+        
+        respuesta = input(f"¿Tu componente tiene {pregunta} igual a '{opciones[0]}'? (s/n): ").lower()
+        if respuesta == 's':
+            candidatos = hacer_pregunta(candidatos, pregunta, opciones[0])
+        else:
+            candidatos = hacer_pregunta(candidatos, pregunta, opciones[1] if len(opciones) > 1 else opciones[0])
+        
+        if len(candidatos) == 1:
             break
 
-    # Si queda solo un componente, adivinar
-    if posibles:
-        print(f"El componente es: {list(posibles.keys())[0]}")
+    if len(candidatos) == 1:
+        print(f"¡Tu componente es un {candidatos[0]['nombre']}!")
     else:
-        print("No pude adivinar el componente.")
-        aprender_nuevo_componente()
+        print("No logré adivinar tu componente.")
+        nuevo_componente = {}
+        for pregunta in preguntas:
+            nuevo_componente[pregunta] = input(f"¿Cuál es el {pregunta} de tu componente?: ")
+        nuevo_componente['nombre'] = input("¿Cuál es el nombre de tu componente?: ")
+        componentes.append(nuevo_componente)
+        guardar_componentes(componentes)
+        print("Gracias, he aprendido un nuevo componente.")
 
-# Función para aprender un nuevo componente
-def aprender_nuevo_componente():
-    nuevo_componente = input("¿Cuál era el componente?: ")
-    if nuevo_componente in componentes:
-        print("Ese componente ya está registrado.")
-        return
-    
-    nuevas_caracteristicas = {}
-    continuar = True
-    while continuar:
-        caracteristica = input(f"Ingrese una característica para {nuevo_componente}: ")
-        respuesta = input(f"¿{nuevo_componente} tiene {caracteristica}? (sí/no): ").strip().lower()
-        nuevas_caracteristicas[caracteristica] = True if respuesta == 'sí' else False
-        continuar = input("¿Agregar otra característica? (sí/no): ").strip().lower() == 'sí'
-    
-    componentes[nuevo_componente] = nuevas_caracteristicas
-    guardar_componentes(componentes)
-    print(f"{nuevo_componente} ha sido agregado a la base de datos.")
-
-adivina_componente()
+# Ejecutar el juego
+componentes = cargar_componentes()
+print("Piensa en un componente electrónico...")
+adivinar_componente(componentes)
