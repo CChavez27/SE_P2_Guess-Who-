@@ -1,7 +1,6 @@
 import json
 import tkinter as tk
 from tkinter import messagebox
-from PIL import Image, ImageTk  # Importar Pillow para trabajar con imágenes
 
 # Base de datos de componentes electrónicos en formato JSON
 componentes_iniciales = [
@@ -59,9 +58,6 @@ class AdivinaQuien:
         self.resultado_label = tk.Label(root, text="")
         self.resultado_label.pack()
 
-        self.imagen_label = tk.Label(root)
-        self.imagen_label.pack()
-
         self.iniciar_juego()
 
     def iniciar_juego(self):
@@ -93,7 +89,6 @@ class AdivinaQuien:
         if len(self.opciones) == 1:
             nombre = self.opciones[0]['nombre']
             self.resultado_label.config(text=f"Creo que tu componente es: {nombre}")
-            self.mostrar_imagen(nombre)  # Mostrar la imagen del componente
         else:
             self.resultado_label.config(text="No he podido adivinar el componente.")
             self.aprender_componente()
@@ -101,19 +96,8 @@ class AdivinaQuien:
         self.respuesta_entry.config(state='disabled')
         self.submit_button.config(state='disabled')
 
-    def mostrar_imagen(self, nombre):
-        try:
-            # Cargar la imagen usando Pillow
-            imagen_path = f"imagenes/{nombre.lower().replace(' ', '_')}.png"  # Ajusta el path según sea necesario
-            imagen = Image.open(imagen_path)
-            imagen = imagen.resize((200, 200), Image.ANTIALIAS)  # Redimensionar imagen
-            self.imagen = ImageTk.PhotoImage(imagen)  # Convertir a PhotoImage
-            self.imagen_label.config(image=self.imagen)  # Actualizar la etiqueta de la imagen
-        except Exception as e:
-            print(f"No se pudo cargar la imagen: {e}")
-            self.imagen_label.config(image='')  # Limpiar la imagen si falla
-
     def aprender_componente(self):
+        # Aquí puedes agregar la lógica para aprender un nuevo componente
         messagebox.showinfo("Aprender Componente", "Vamos a aprender un nuevo componente.")
         # Aquí podrías implementar una ventana emergente o algo similar para ingresar un nuevo componente.
 
